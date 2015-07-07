@@ -1,0 +1,23 @@
+@import 'ext/logo.scss';
+@import 'ext/responsive.scss';
+
+body {
+    padding: 0;
+    border: none;
+    width: 50%;
+    height: 80%;
+    margin: auto;
+    left: 0;
+    top: 0; 
+}
+
+.content {
+    width: 100%;
+    text-align: center;
+    font-family: Helvetica, 'Helvetica', arial, sans-serif;
+    text-transform: uppercase;
+    font-size: 30px;
+    color: rgb(93, 154, 223);
+    font-weight: bold;
+}
+
