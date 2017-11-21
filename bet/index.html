@@ -1,1 +1,225 @@
-test
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" /> 
+    <style type="text/css">
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 15px;            
+        }
+        input{
+            padding: 8px 10px;
+            width: 100px;
+            border-radius: 5px;
+            border: solid 1px #bbb;
+        }
+        button{
+            padding: 5px 10px;
+            font-size: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: solid 1px #bbb;
+            cursor: pointer;
+        }
+        button:hover{
+            background-color: #efefef;
+        }
+
+        .betdata td:first-child{
+            font-weight: bold;
+        }
+
+        .betList th,
+        .betList td{
+            width: 100px;
+            text-align: left;
+        }
+
+        .inputForm,
+        .footer{
+            padding: 20px;
+            background: #eee;
+            border-radius: 5px;
+        }
+    </style>
+    <title>
+        Bet
+    </title>
+</head>
+<body>
+    <div>
+        <div class="inputForm">
+            <table style="margin: auto; max-width: 300px;">
+                <thead>
+                    <th>Input Number</th>
+                    <th>Bet 1</th>
+                    <th>Bet 2</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <input id="num" type="number" maxlength="3" min="0" max="999">
+                        </td>
+                        <td>
+                            <input id="bet1" type="number" maxlength="3" min="0" max="999">
+                        </td>
+                        <td>
+                            <input id="bet2" type="number" maxlength="3" min="0" max="999">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> 
+                        </td>
+                        <td>                                                
+                        </td>
+                        <td style="text-align: right; padding: 5px 0;">
+                            <button type="button" onclick="clearInputs()">Clear</button>     
+                            <button type="button" onclick="onSubmit()">Save</button>                            
+                        </td>
+                    </tr>              
+                </tbody>
+            </table>   
+        </div>   
+        <table style="margin: auto; max-width: 400px; margin-top: 20px;" class="betList">
+            <thead>
+                <th>Number</th>
+                <th>Count</th>
+                <th>Bet 1</th>
+                <th>Bet 2</th>
+                <th style="width: auto;"></th>
+            </thead>
+            <tbody >            
+            </tbody>
+        </table>    
+        <div class="footer" style="margin-top: 50px;">
+            <div style="max-width:400px; text-align:right; margin: auto;">
+                    <button onclick="downloadCsv()">Download CSV</button>
+                <button onclick="resetAll()">Reset All Data</button>
+            </div>
+        </div>
+    </form>     
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+        var dataList = [];
+        if (typeof(Storage) !== "undefined") {
+            const xdata = localStorage.getItem("bet") || "[]";
+            dataList = JSON.parse(xdata);
+        } else {
+            alert("No Storage Support");
+        }
+
+        var clearInputs = function(){
+            $("#num").val("");
+            $("#bet1").val("");
+            $("#bet2").val("");
+        }
+ 
+        var onSubmit = function(){
+            
+            var num = $("#num").val().trim();
+            var bet1 = $("#bet1").val().trim();
+            var bet2 = $("#bet2").val().trim();
+
+            if(!num || !bet1 || !bet2){
+                alert("Invalid Entries");
+                return;
+            }
+
+            var data = {
+                num: num, bet1: parseInt(bet1), bet2: parseInt(bet2), count: 1
+            };
+
+            var matchFound = false;
+            for(var i in dataList){
+                if(dataList[i].num === num){
+                    matchFound = true;
+                    dataList[i].bet1 += data.bet1;
+                    dataList[i].bet2 += data.bet2;
+                    dataList[i].count += data.count;
+                }
+            }
+
+            if(!matchFound){
+                dataList.push(data);
+            }
+
+            if (typeof(Storage) !== "undefined") {
+                localStorage.setItem("bet", JSON.stringify(dataList));
+            } else {
+                //alert("No Storage Support");
+            }
+
+            render();
+        }
+
+        var render = function(){
+            $(".betList .betdata").remove();
+            dataList.sort(function(a, b){
+                if(a.num < b.num) return -1;
+                if(a.num > b.num) return 1;
+                return 0;
+            });
+
+            for(var i in dataList){
+                var item = dataList[i];
+                $(".betList tbody").append('<tr class="betdata" itemid="'+ item.num +'"><td>'+ item.num +'</td><td>'+ 
+                item.count +'</td><td>'+ item.bet1 +'</td><td>'+ item.bet2 +'</td><td><button onclick="deleteItem(this)">Delete</button></td></tr>');
+            } 
+        }
+
+        var deleteItem = function(e){
+            var id = $(e).closest("tr").attr("itemid");
+            var match;
+            for(var i in dataList){
+                var item = dataList[i];
+                if(item.num === id){
+                    match = item;
+                }
+            } 
+            if(match){
+                var idx = dataList.indexOf(match);
+                dataList.splice(idx, 1);
+                localStorage.setItem("bet", JSON.stringify(dataList));
+            }
+            $(e).closest("tr").remove();
+        }
+
+        var resetAll = function(){
+            dataList = [];
+            localStorage.setItem("bet", JSON.stringify([]));
+            render();
+        }
+
+        var downloadCsv = function(){
+            var csvContent = "data:text/csv;charset=utf-8,";
+            dataList.sort(function(a, b){
+                if(a.num < b.num) return -1;
+                if(a.num > b.num) return 1;
+                return 0;
+            });
+
+            csvContent += "Number,Count,Bet1,Bet2\r\n"; // add carriage return
+            for(var i in dataList){
+                var item = dataList[i];
+                var arr = ["'"+ item.num, item.count, item.bet1, item.bet2].join(",");
+                csvContent += arr + "\r\n"; // add carriage return
+            } 
+
+            var encodedUri = encodeURI(csvContent);
+            
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "bet-data.csv");
+            document.body.appendChild(link); // Required for FF
+            link.click(); // This will download the data file named "my_data.csv".
+            setTimeout(function(){
+                $(link).remove();
+            }, 1000);
+        }
+
+        render();
+    </script>
+</body>
+</html>
